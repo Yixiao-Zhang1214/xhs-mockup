@@ -445,7 +445,6 @@ body{
 /* ===== Onboarding Hint ===== */
 .guide-hint{
   position:fixed;
-  bottom:20px;
   left:50%;
   transform:translateX(-50%);
   background:rgba(0,0,0,.8);
@@ -455,11 +454,21 @@ body{
   border-radius:20px;
   z-index:200;
   opacity:0;
-  transition:opacity .3s;
+  transition:opacity .3s, top .3s;
   pointer-events:none;
+  white-space:nowrap;
 }
 .guide-hint.show{
   opacity:1;
+}
+.guide-hint.down{
+  top:auto;
+  bottom:80px;
+}
+.guide-hint.click{
+  top:50%;
+  bottom:auto;
+  transform:translate(-50%, -50%);
 }
 </style>
 </head>
@@ -21379,31 +21388,86 @@ function backToCard() {
   if (floatBtn) floatBtn.remove();
 }
 
-// ===== Onboarding Hint =====
-const guideMessages = [
-  '👆 点击「大家补充了」展开AI整理的问答',
-  '👉 点击任意内容可跳转到对应评论'
-];
-let guideStep = 0;
+// ===== Onboarding Guide =====
+let guidePhase = 0; // 0: scroll, 1: click
 
-function showHint() {
+function showGuide() {
+  if (localStorage.getItem('xhs_guide_done')) return;
+  
   const hint = document.getElementById('guideHint');
   if (!hint) return;
-  hint.textContent = guideMessages[guideStep];
-  hint.classList.add('show');
   
-  setTimeout(() => {
-    hint.classList.remove('show');
-    guideStep++;
-    if (guideStep < guideMessages.length) {
-      setTimeout(showHint, 500);
-    } else {
-      localStorage.setItem('xhs_guide_done', 'true');
+  if (guidePhase === 0) {
+    // Phase 1: scroll down hint
+    hint.textContent = '👇 向下滑动，找到「大家补充了」';
+    hint.className = 'guide-hint down show';
+    
+    // Wait for user to scroll to supplement section
+    const scrollArea = document.querySelector('.scroll-area');
+    if (scrollArea) {
+      scrollArea.addEventListener('scroll', checkScrollPosition, { once: true });
     }
-  }, 3000);
+  }
 }
 
-function showGuide() { showHint(); }
+function checkScrollPosition() {
+  const supplement = document.querySelector('.supplement-entry, .supplement-expanded');
+  if (!supplement) return;
+  
+  const scrollArea = document.querySelector('.scroll-area');
+  if (!scrollArea) return;
+  
+  const rect = supplement.getBoundingClientRect();
+  const scrollRect = scrollArea.getBoundingClientRect();
+  
+  // Check if supplement section is visible
+  if (rect.top < scrollRect.bottom - 50) {
+    // User scrolled to supplement section
+    guidePhase = 1;
+    showClickHint();
+  } else {
+    // Still not there, wait again
+    const scrollArea = document.querySelector('.scroll-area');
+    if (scrollArea) {
+      scrollArea.addEventListener('scroll', checkScrollPosition, { once: true });
+    }
+  }
+}
+
+function showClickHint() {
+  const hint = document.getElementById('guideHint');
+  if (!hint) return;
+  
+  hint.textContent = '👆 点击「大家补充了」试试';
+  hint.className = 'guide-hint click show';
+  
+  // Auto close after 4s or on click
+  const timeout = setTimeout(() => {
+    closeGuide();
+  }, 4000);
+  
+  // Listen for supplement click
+  const supplement = document.querySelector('.supplement-entry');
+  if (supplement) {
+    supplement.addEventListener('click', () => {
+      clearTimeout(timeout);
+      closeGuide();
+    }, { once: true });
+  }
+}
+
+function closeGuide() {
+  const hint = document.getElementById('guideHint');
+  if (hint) {
+    hint.classList.remove('show');
+  }
+  localStorage.setItem('xhs_guide_done', 'true');
+}
+
+// Start guide after page loads
+window.addEventListener('load', function() {
+  setTimeout(showGuide, 800);
+});
 </script>
 
 <!-- Guide Hint -->
