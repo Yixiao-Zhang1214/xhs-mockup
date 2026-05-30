@@ -228,6 +228,42 @@ body{
   font-family:Monaco,Menlo,monospace;
   font-size:11px;
 }
+
+/* ===== Mode Switch ===== */
+.mode-switch{
+  display:flex;
+  background:#f5f5f5;
+  border-radius:8px;
+  padding:3px;
+  margin-bottom:16px;
+}
+.mode-btn{
+  flex:1;
+  padding:8px 0;
+  font-size:13px;
+  font-weight:500;
+  color:#666;
+  background:transparent;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  transition:all .2s;
+}
+.mode-btn.active{
+  background:#fff;
+  color:#ff2442;
+  box-shadow:0 1px 3px rgba(0,0,0,.08);
+}
+
+.mode-tag{
+  display:inline-block;
+  font-size:11px;
+  padding:2px 8px;
+  border-radius:10px;
+  margin-left:8px;
+}
+.mode-tag.demo{background:#e8f5e9;color:#2e7d32;}
+.mode-tag.real{background:#e3f2fd;color:#1565c0;}
 </style>
 </head>
 <body>
@@ -255,6 +291,18 @@ body{
     
     <!-- Input Card -->
     <div class="api-test-card">
+      <!-- Mode Switch -->
+      <div class="mode-switch">
+        <button class="mode-btn active" data-mode="demo" onclick="switchMode('demo')">
+          演示模式
+          <span class="mode-tag demo">云端可用</span>
+        </button>
+        <button class="mode-btn" data-mode="real" onclick="switchMode('real')">
+          真实模式
+          <span class="mode-tag real">需本地服务</span>
+        </button>
+      </div>
+      
       <div class="input-group">
         <label class="input-label">小红书链接</label>
         <input type="text" class="url-input" id="xhsUrl" 
@@ -279,15 +327,11 @@ body{
     </div>
     
     <!-- Script Guide -->
-    <div class="script-guide">
-      <h4>⚠️ 需要本地后端服务</h4>
+    <div class="script-guide" id="guideBox">
+      <h4>ℹ️ 当前为演示模式</h4>
       <p>
-        此页面需要运行本地 Python 服务来处理小红书数据。<br>
-        在终端执行：
-      </p>
-      <p style="margin-top:8px;">
-        <code>cd /Users/zhangyixiao/WorkBuddy/2026-05-30-task-3</code><br>
-        <code>python scripts/xhs_skill_server.py</code>
+        演示模式返回模拟数据，用于体验交互流程。<br>
+        如需真实数据，切换到「真实模式」并启动本地服务。
       </p>
     </div>
     
@@ -307,6 +351,84 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
   });
 });
+
+// ===== Mode Management =====
+let currentMode = 'demo';
+
+function switchMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.mode-btn[data-mode="${mode}"]`).classList.add('active');
+  
+  // Update guide text
+  const guide = document.getElementById('guideBox');
+  if (mode === 'demo') {
+    guide.innerHTML = `
+      <h4>ℹ️ 当前为演示模式</h4>
+      <p>
+        演示模式返回模拟数据，用于体验交互流程。<br>
+        无需本地环境，任何人打开网页即可测试。
+      </p>`;
+  } else {
+    guide.innerHTML = `
+      <h4>⚠️ 需要本地后端服务</h4>
+      <p>
+        真实模式调用 xhs_cli API，需要本地 Cookie 认证。<br>
+        在终端执行：
+      </p>
+      <p style="margin-top:8px;">
+        <code>cd /Users/zhangyixiao/WorkBuddy/2026-05-30-task-3</code><br>
+        <code>python scripts/xhs_skill_server.py</code>
+      </p>`;
+  }
+}
+
+// ===== Demo Data =====
+const DEMO_RESULT = `# 📱 潜水员戴夫 Day1 全流程攻略
+
+**作者**: 奇奇的游戏生活
+**发布时间**: 2024-02-08
+**互动数据**: 4.3万赞 / 937收藏 / 5481评论
+
+---
+
+## 🎯 笔记正文要点
+
+前期需要尽量多捕一些小型鱼类
+- 星斑叉鼻鲀、大斑鳐鱼、金眼鲷
+- 明天开业准备河豚冻的食材
+- 解锁食谱：河豚冻 + 绯红鱼卷
+- 员工不需要升级
+- 优先完成鲛人村的任务
+- 扩建农场 + 解锁员工
+
+---
+
+## ⚠️ 有人补充了 (3条)
+
+• 绯红鱼卷菜谱在哪获得、泔水套餐怎么解锁问的人多
+  → 菜谱在鲛人村任务完成后解锁
+
+• 员工怎么升级
+  → 在员工管理界面使用金币升级
+
+• 极限升级和随缘玩有啥区别？日期是无限的吗？
+  → 极限升级追求最快速度通关，日期无限但事件有限
+
+---
+
+## 💬 大家都在说 (2条)
+
+• 攻略认可度高，收藏码感谢是高频词
+• "太强了""手把手喂饭"是常见评价
+
+---
+
+## 🔥 最新热议
+
+• 绯红鱼卷经济自由！赚钱太爽了
+• 泔水套餐解锁条件很多人问
+• 推荐优先升级鱼卷，亲测有效`;
 
 // ===== Skill Execution =====
 async function runSkill() {
@@ -331,37 +453,56 @@ async function runSkill() {
   content.className = 'result-content';
   content.textContent = '正在解析链接...\n获取评论数据...\n分析内容...\n生成结果...';
   
+  // Simulate processing delay
+  await new Promise(r => setTimeout(r, 1500));
+  
   try {
-    // Call local backend API
-    const response = await fetch('http://localhost:8765/api/xhs/skill', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({url})
-    });
-    
-    if (!response.ok) {
-      throw new Error(`API错误: ${response.status}`);
+    if (currentMode === 'demo') {
+      // Demo mode: return simulated result
+      status.className = 'result-status success';
+      status.textContent = '演示完成';
+      content.className = 'result-content';
+      content.textContent = DEMO_RESULT;
+      
+    } else {
+      // Real mode: call local backend API
+      try {
+        const response = await fetch('http://localhost:8765/api/xhs/skill', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({url}),
+          signal: AbortSignal.timeout(10000)
+        });
+        
+        if (!response.ok) {
+          throw new Error(`API错误: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.ok) {
+          status.className = 'result-status success';
+          status.textContent = '成功';
+          content.className = 'result-content';
+          content.textContent = data.result;
+        } else {
+          throw new Error(data.error?.message || '未知错误');
+        }
+        
+      } catch (err) {
+        // Local service not available, suggest demo mode
+        status.className = 'result-status error';
+        status.textContent = '连接失败';
+        content.className = 'result-content';
+        content.innerHTML = `<div class="error-detail">
+          <strong>无法连接本地服务</strong><br>
+          ${err.message}<br><br>
+          <strong>建议：</strong>切换到「演示模式」即可体验功能，<br>
+          无需启动本地服务。
+        </div>`;
+      }
     }
     
-    const data = await response.json();
-    
-    // Success
-    status.className = 'result-status success';
-    status.textContent = '成功';
-    content.className = 'result-content';
-    content.textContent = data.result || JSON.stringify(data, null, 2);
-    
-  } catch (error) {
-    // Error handling
-    status.className = 'result-status error';
-    status.textContent = '失败';
-    content.className = 'result-content';
-    content.innerHTML = `<div class="error-detail">
-      <strong>请求失败</strong><br>
-      ${error.message}<br><br>
-      <strong>请确保本地服务已启动：</strong><br>
-      <code>python scripts/xhs_skill_server.py</code>
-    </div>`;
   } finally {
     btn.disabled = false;
     btn.textContent = '运行 Skill';
