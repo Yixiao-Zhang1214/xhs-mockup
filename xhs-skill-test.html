@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小红书「大家补充了」Skill 测试</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  background:#f5f5f5;
+  min-height:100vh;
+  font-family:-apple-system,'SF Pro Text','Helvetica Neue','PingFang SC',sans-serif;
+}
+
+/* ===== Tab Navigation ===== */
+.tab-nav{
+  display:flex;
+  background:#fff;
+  border-bottom:1px solid #eee;
+  position:sticky;
+  top:0;
+  z-index:100;
+}
+.tab-btn{
+  flex:1;
+  padding:14px 0;
+  font-size:15px;
+  font-weight:500;
+  color:#666;
+  background:none;
+  border:none;
+  cursor:pointer;
+  position:relative;
+  transition:color .2s;
+}
+.tab-btn.active{
+  color:#ff2442;
+  font-weight:600;
+}
+.tab-btn.active::after{
+  content:'';
+  position:absolute;
+  bottom:0;
+  left:50%;
+  transform:translateX(-50%);
+  width:40px;
+  height:3px;
+  background:#ff2442;
+  border-radius:2px 2px 0 0;
+}
+
+/* ===== Tab Content ===== */
+.tab-content{
+  display:none;
+  padding:20px;
+}
+.tab-content.active{
+  display:block;
+}
+
+/* ===== Demo Tab ===== */
+.demo-container{
+  max-width:400px;
+  margin:0 auto;
+}
+.demo-placeholder{
+  background:#fff;
+  border-radius:12px;
+  padding:40px 20px;
+  text-align:center;
+  color:#999;
+}
+.demo-placeholder a{
+  color:#ff2442;
+  text-decoration:none;
+}
+
+/* ===== API Test Tab ===== */
+.api-test-container{
+  max-width:600px;
+  margin:0 auto;
+}
+.api-test-card{
+  background:#fff;
+  border-radius:12px;
+  padding:20px;
+  margin-bottom:20px;
+}
+
+.input-group{
+  margin-bottom:16px;
+}
+.input-label{
+  display:block;
+  font-size:14px;
+  font-weight:500;
+  color:#333;
+  margin-bottom:8px;
+}
+.input-hint{
+  font-size:12px;
+  color:#999;
+  margin-top:6px;
+}
+
+.url-input{
+  width:100%;
+  padding:12px 14px;
+  font-size:14px;
+  border:1.5px solid #e5e5e5;
+  border-radius:10px;
+  outline:none;
+  transition:border-color .2s;
+}
+.url-input:focus{
+  border-color:#ff2442;
+}
+.url-input::placeholder{
+  color:#ccc;
+}
+
+.run-btn{
+  width:100%;
+  padding:13px;
+  font-size:15px;
+  font-weight:600;
+  color:#fff;
+  background:linear-gradient(135deg,#ff2442,#ff6b81);
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+  transition:opacity .2s,transform .1s;
+}
+.run-btn:hover{opacity:.9;}
+.run-btn:active{transform:scale(.98);}
+.run-btn:disabled{
+  background:#ccc;
+  cursor:not-allowed;
+}
+
+/* ===== Result Area ===== */
+.result-area{
+  background:#fff;
+  border-radius:12px;
+  padding:20px;
+  min-height:200px;
+}
+.result-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:12px;
+  padding-bottom:12px;
+  border-bottom:1px solid #f0f0f0;
+}
+.result-title{
+  font-size:14px;
+  font-weight:600;
+  color:#333;
+}
+.result-status{
+  font-size:12px;
+  padding:3px 10px;
+  border-radius:10px;
+}
+.result-status.success{background:#e8f5e9;color:#2e7d32;}
+.result-status.error{background:#ffebee;color:#c62828;}
+.result-status.loading{background:#fff3e0;color:#ef6c00;}
+
+.result-content{
+  font-size:14px;
+  line-height:1.7;
+  color:#333;
+  white-space:pre-wrap;
+  word-break:break-word;
+}
+.result-content.placeholder{
+  color:#999;
+  text-align:center;
+  padding:60px 0;
+}
+
+.error-detail{
+  margin-top:12px;
+  padding:12px;
+  background:#fff5f5;
+  border-radius:8px;
+  font-size:13px;
+  color:#c62828;
+}
+
+/* ===== Loading Spinner ===== */
+.spinner{
+  display:inline-block;
+  width:16px;
+  height:16px;
+  border:2px solid #fff;
+  border-top-color:transparent;
+  border-radius:50%;
+  animation:spin .8s linear infinite;
+  margin-right:6px;
+  vertical-align:middle;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ===== Local Script Guide ===== */
+.script-guide{
+  background:#fffbeb;
+  border:1px solid #fcd34d;
+  border-radius:12px;
+  padding:16px;
+  margin-top:20px;
+}
+.script-guide h4{
+  font-size:13px;
+  color:#92400e;
+  margin-bottom:8px;
+}
+.script-guide p{
+  font-size:12px;
+  color:#a16207;
+  line-height:1.6;
+}
+.script-guide code{
+  background:#fef3c7;
+  padding:2px 6px;
+  border-radius:4px;
+  font-family:Monaco,Menlo,monospace;
+  font-size:11px;
+}
+</style>
+</head>
+<body>
+
+<!-- Tab Navigation -->
+<nav class="tab-nav">
+  <button class="tab-btn active" data-tab="demo">Demo 体验</button>
+  <button class="tab-btn" data-tab="api">接口测试</button>
+</nav>
+
+<!-- Tab Contents -->
+<div class="tab-content active" id="tab-demo">
+  <div class="demo-container">
+    <div class="demo-placeholder">
+      <p>Demo 体验页面</p>
+      <p style="margin-top:12px;font-size:13px;">
+        <a href="xhs-mockup.html">点击打开完整 Mockup →</a>
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="tab-content" id="tab-api">
+  <div class="api-test-container">
+    
+    <!-- Input Card -->
+    <div class="api-test-card">
+      <div class="input-group">
+        <label class="input-label">小红书链接</label>
+        <input type="text" class="url-input" id="xhsUrl" 
+               placeholder="粘贴小红书笔记链接或短链接...">
+        <p class="input-hint">支持：完整URL / xhslink.com 短链接</p>
+      </div>
+      
+      <button class="run-btn" id="runBtn" onclick="runSkill()">
+        运行 Skill
+      </button>
+    </div>
+    
+    <!-- Result Card -->
+    <div class="result-area">
+      <div class="result-header">
+        <span class="result-title">输出结果</span>
+        <span class="result-status" id="resultStatus"></span>
+      </div>
+      <div class="result-content placeholder" id="resultContent">
+        输入链接后点击「运行 Skill」，结果将在此显示...
+      </div>
+    </div>
+    
+    <!-- Script Guide -->
+    <div class="script-guide">
+      <h4>⚠️ 需要本地后端服务</h4>
+      <p>
+        此页面需要运行本地 Python 服务来处理小红书数据。<br>
+        在终端执行：
+      </p>
+      <p style="margin-top:8px;">
+        <code>cd /Users/zhangyixiao/WorkBuddy/2026-05-30-task-3</code><br>
+        <code>python scripts/xhs_skill_server.py</code>
+      </p>
+    </div>
+    
+  </div>
+</div>
+
+<script>
+// ===== Tab Switching =====
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    // Update buttons
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    
+    // Update content
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+// ===== Skill Execution =====
+async function runSkill() {
+  const url = document.getElementById('xhsUrl').value.trim();
+  const btn = document.getElementById('runBtn');
+  const status = document.getElementById('resultStatus');
+  const content = document.getElementById('resultContent');
+  
+  if (!url) {
+    status.className = 'result-status error';
+    status.textContent = '请输入链接';
+    content.className = 'result-content';
+    content.textContent = '错误：请先输入小红书链接';
+    return;
+  }
+  
+  // Loading state
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>处理中...';
+  status.className = 'result-status loading';
+  status.textContent = '处理中';
+  content.className = 'result-content';
+  content.textContent = '正在解析链接...\n获取评论数据...\n分析内容...\n生成结果...';
+  
+  try {
+    // Call local backend API
+    const response = await fetch('http://localhost:8765/api/xhs/skill', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({url})
+    });
+    
+    if (!response.ok) {
+      throw new Error(`API错误: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    // Success
+    status.className = 'result-status success';
+    status.textContent = '成功';
+    content.className = 'result-content';
+    content.textContent = data.result || JSON.stringify(data, null, 2);
+    
+  } catch (error) {
+    // Error handling
+    status.className = 'result-status error';
+    status.textContent = '失败';
+    content.className = 'result-content';
+    content.innerHTML = `<div class="error-detail">
+      <strong>请求失败</strong><br>
+      ${error.message}<br><br>
+      <strong>请确保本地服务已启动：</strong><br>
+      <code>python scripts/xhs_skill_server.py</code>
+    </div>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '运行 Skill';
+  }
+}
+
+// Enter key to submit
+document.getElementById('xhsUrl').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') runSkill();
+});
+</script>
+
+</body>
+</html>
