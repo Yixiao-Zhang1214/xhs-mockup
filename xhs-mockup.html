@@ -441,6 +441,107 @@ body{
   position:absolute;bottom:5px;left:50%;transform:translateX(-50%);
   width:100px;height:4px;background:#000;border-radius:2px;z-index:25;
 }
+
+/* ===== Onboarding Guide ===== */
+.guide-overlay{
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  background:rgba(0,0,0,.65);
+  z-index:200;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  opacity:0;
+  visibility:hidden;
+  transition:opacity .3s,visibility .3s;
+}
+.guide-overlay.show{
+  opacity:1;
+  visibility:visible;
+}
+.guide-card{
+  background:#fff;
+  border-radius:16px;
+  padding:24px 20px;
+  max-width:280px;
+  text-align:center;
+  transform:scale(.9);
+  transition:transform .3s;
+}
+.guide-overlay.show .guide-card{
+  transform:scale(1);
+}
+.guide-step{
+  display:inline-block;
+  background:#ff2442;
+  color:#fff;
+  font-size:11px;
+  font-weight:600;
+  padding:4px 12px;
+  border-radius:12px;
+  margin-bottom:12px;
+}
+.guide-icon{
+  font-size:48px;
+  margin-bottom:12px;
+}
+.guide-title{
+  font-size:16px;
+  font-weight:600;
+  color:#333;
+  margin-bottom:8px;
+}
+.guide-desc{
+  font-size:13px;
+  color:#666;
+  line-height:1.5;
+  margin-bottom:16px;
+}
+.guide-btn{
+  width:100%;
+  padding:12px;
+  font-size:14px;
+  font-weight:600;
+  color:#fff;
+  background:linear-gradient(135deg,#ff2442,#ff6b81);
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+}
+.guide-btn:active{transform:scale(.97);}
+.guide-skip{
+  display:block;
+  margin-top:10px;
+  font-size:12px;
+  color:#999;
+  cursor:pointer;
+}
+.guide-skip:hover{color:#666;}
+
+/* Highlight ring for target element */
+.guide-highlight{
+  position:absolute;
+  border:3px solid #ff2442;
+  border-radius:12px;
+  box-shadow:0 0 0 4px rgba(255,36,66,.2);
+  pointer-events:none;
+  z-index:201;
+  animation:pulse-ring 1.5s infinite;
+}
+@keyframes pulse-ring{
+  0%,100%{box-shadow:0 0 0 4px rgba(255,36,66,.2);}
+  50%{box-shadow:0 0 0 8px rgba(255,36,66,.1);}
+}
+
+/* Arrow pointer */
+.guide-arrow{
+  position:absolute;
+  z-index:202;
+  animation:bounce-arrow 1s infinite;
+}
+@keyframes bounce-arrow{
+  0%,100%{transform:translateY(0);}
+  50%{transform:translateY(-6px);}
+}
 </style>
 </head>
 <body>
@@ -21358,6 +21459,135 @@ function backToCard() {
   var floatBtn = document.querySelector('.float-back-btn');
   if (floatBtn) floatBtn.remove();
 }
+
+// ===== Onboarding Guide =====
+const guideSteps = [
+  {
+    target: '.supplement-entry',
+    title: '点击「大家补充了」',
+    desc: '这里是AI从评论中提取的高质量问答，点击展开查看详情',
+    actionText: '知道了，开始体验'
+  },
+  {
+    target: '.exp-bullet:not(.no-jump)',
+    title: '点击具体内容',
+    desc: '点击任意一条补充内容，即可跳转到对应评论位置',
+    actionText: '我学会了'
+  }
+];
+
+let currentGuideStep = 0;
+let guideHighlight = null;
+
+function showGuide() {
+  const step = guideSteps[currentGuideStep];
+  const overlay = document.getElementById('guideOverlay');
+  const card = document.getElementById('guideCard');
+  const target = document.querySelector(step.target);
+  
+  if (!target || !overlay || !card) return;
+  
+  // Position card
+  const rect = target.getBoundingClientRect();
+  const cardW = 280;
+  const cardH = 220;
+  
+  // Card position: center horizontally, below the target
+  let cardTop = rect.bottom + 16;
+  let cardLeft = rect.left + (rect.width / 2) - (cardW / 2);
+  
+  // Keep within viewport
+  if (cardTop + cardH > window.innerHeight - 20) {
+    cardTop = rect.top - cardH - 16;
+  }
+  if (cardLeft < 16) cardLeft = 16;
+  if (cardLeft + cardW > window.innerWidth - 16) cardLeft = window.innerWidth - cardW - 16;
+  
+  card.style.top = cardTop + 'px';
+  card.style.left = cardLeft + 'px';
+  card.style.bottom = 'auto';
+  
+  // Update card content
+  document.getElementById('guideStep').textContent = `步骤 ${currentGuideStep + 1}/${guideSteps.length}`;
+  document.getElementById('guideIcon').textContent = currentGuideStep === 0 ? '👆' : '👇';
+  document.getElementById('guideTitle').textContent = step.title;
+  document.getElementById('guideDesc').textContent = step.desc;
+  document.getElementById('guideBtn').textContent = step.actionText;
+  
+  // Highlight target
+  if (guideHighlight) guideHighlight.remove();
+  guideHighlight = document.createElement('div');
+  guideHighlight.className = 'guide-highlight';
+  guideHighlight.style.top = (rect.top - 6) + 'px';
+  guideHighlight.style.left = (rect.left - 6) + 'px';
+  guideHighlight.style.width = (rect.width + 12) + 'px';
+  guideHighlight.style.height = (rect.height + 12) + 'px';
+  document.body.appendChild(guideHighlight);
+  
+  // Show overlay
+  overlay.classList.add('show');
+  
+  // Setup next step handler
+  document.getElementById('guideBtn').onclick = handleGuideAction;
+  document.getElementById('guideSkip').onclick = closeGuide;
+}
+
+function handleGuideAction() {
+  const step = guideSteps[currentGuideStep];
+  const target = document.querySelector(step.target);
+  
+  if (target) {
+    // Simulate click on target
+    if (currentGuideStep === 0) {
+      // First step: expand supplement
+      toggleSupplement('expand');
+      currentGuideStep = 1;
+      setTimeout(showGuide, 1800);
+    } else {
+      // Second step: trigger comment jump
+      const bullets = document.querySelectorAll('.exp-bullet:not(.no-jump)');
+      if (bullets.length > 0) {
+        const keyword = bullets[0].getAttribute('onclick')?.match(/jumpToComment\('([^']+)'\)/)?.[1];
+        if (keyword) {
+          jumpToComment(keyword);
+        } else {
+          bullets[0].click();
+        }
+      }
+      closeGuide();
+    }
+  }
+}
+
+function closeGuide() {
+  const overlay = document.getElementById('guideOverlay');
+  if (overlay) overlay.classList.remove('show');
+  if (guideHighlight) {
+    guideHighlight.remove();
+    guideHighlight = null;
+  }
+  // Save completion
+  localStorage.setItem('xhs_guide_done', 'true');
+}
+
+// Auto show guide on first visit (after page load)
+window.addEventListener('load', function() {
+  if (!localStorage.getItem('xhs_guide_done')) {
+    setTimeout(showGuide, 1500);
+  }
+});
 </script>
+
+<!-- Guide Overlay -->
+<div class="guide-overlay" id="guideOverlay">
+  <div class="guide-card" id="guideCard" style="position:fixed;">
+    <div class="guide-step" id="guideStep">步骤 1/2</div>
+    <div class="guide-icon" id="guideIcon">👆</div>
+    <div class="guide-title" id="guideTitle">点击「大家补充了」</div>
+    <div class="guide-desc" id="guideDesc">这里是AI从评论中提取的高质量问答，点击展开查看详情</div>
+    <button class="guide-btn" id="guideBtn">知道了，开始体验</button>
+    <span class="guide-skip" id="guideSkip">跳过引导</span>
+  </div>
+</div>
 
 </html>
