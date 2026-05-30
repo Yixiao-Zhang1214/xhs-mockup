@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小红书 — 大家补充了</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+body{
+  background:#e8e8ed;
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  font-family:-apple-system,'SF Pro Text','Helvetica Neue','PingFang SC','Hiragino Sans GB',sans-serif;
+  padding:16px;
+}
+
+/* ===== iPhone Container ===== */
+.iphone{
+  width:294px;height:633px;background:#000;border-radius:39px;
+  padding:8px;position:relative;
+  box-shadow:0 0 0 1px #444,0 0 0 2px #222,0 30px 60px rgba(0,0,0,.45),inset 0 0 2px rgba(255,255,255,.05);
+}
+.screen{width:100%;height:100%;background:#fff;border-radius:31px;overflow:hidden;position:relative;}
+
+/* Dynamic Island */
+.dyn-island{
+  position:absolute;top:8px;left:50%;transform:translateX(-50%);
+  width:88px;height:25px;background:#000;border-radius:16px;z-index:50;
+}
+
+/* Status Bar */
+.status-bar{
+  height:40px;padding:10px 18px 0;display:flex;justify-content:space-between;
+  align-items:flex-start;font-size:11px;font-weight:600;letter-spacing:.2px;position:relative;z-index:10;
+}
+.sb-left{display:flex;align-items:center;gap:3px;}
+.batt-pct{font-size:9px;font-weight:600;color:#34c759;}
+
+/* Scrollable Content */
+.scroll-area{
+  height:calc(100% - 40px);overflow-y:auto;scroll-behavior:smooth;
+  -webkit-overflow-scrolling:touch;
+}
+.scroll-area::-webkit-scrollbar{display:none;}
+
+/* Header */
+.header{
+  display:flex;align-items:center;justify-content:space-between;
+  height:33px;padding:0 9px;position:sticky;top:0;background:rgba(255,255,255,.95);z-index:8;
+  backdrop-filter:saturate(180%) blur(10px);
+}
+.hdr-l{display:flex;align-items:center;gap:7px;flex:1;min-width:0;}
+.back-btn{width:21px;height:21px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+.back-btn svg{width:15px;height:15px;color:#333;}
+.author-row{display:flex;align-items:center;gap:6px;min-width:0;}
+.avt-main{
+  width:24px;height:24px;border-radius:50%;overflow:hidden;flex-shrink:0;
+  background:linear-gradient(145deg,#e0e0e4,#f0f0f4);
+}
+.avt-main img{width:100%;height:100%;object-fit:cover;}
+.author-name{font-size:11px;font-weight:600;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hdr-r{display:flex;align-items:center;gap:9px;flex-shrink:0;}
+.follow-btn{
+  border:1px solid #ff2442;color:#ff2442;background:transparent;
+  border-radius:11px;padding:2px 9px;font-size:10px;font-weight:500;
+  cursor:pointer;transition:.15s;white-space:nowrap;line-height:1.6;
+}
+.share-btn{cursor:pointer;display:flex;align-items:center;}
+.share-btn svg{width:15px;height:15px;color:#333;}
+
+/* Post Content */
+.post{padding:0 12px;}
+.title{
+  font-size:14px;font-weight:700;line-height:1.4;color:#111;
+  margin-bottom:8px;word-break:break-word;padding-top:2px;
+}
+.post-img-wrap{margin-bottom:0;border-radius:8px;overflow:hidden;position:relative;}
+.post-img{width:100%;display:block;border-radius:8px;background:#e8eaed;overflow:hidden;}
+.post-img img{width:100%;height:auto;object-fit:contain;display:block;}
+.img-counter-badge{
+  position:absolute;top:6px;right:6px;z-index:5;
+  background:rgba(0,0,0,.45);color:#fff;
+  font-size:9px;padding:1.5px 6px;border-radius:8px;font-weight:400;
+  letter-spacing:.3px;line-height:1.5;
+}
+.img-dots{display:flex;justify-content:center;gap:4px;padding:6px 0 5px;}
+.dot{width:4px;height:4px;border-radius:50%;background:#ddd;transition:.25s;}
+.dot.on{background:#ff2442;transform:scale(1.2);opacity:1;}
+.post-body-text{font-size:11px;line-height:1.6;color:#333;margin-top:3px;margin-bottom:5px;word-break:break-all;}
+.post-body-text.collapsed{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+.exp-btn{color:#999;font-size:10px;cursor:pointer;display:inline-block;margin-top:0;user-select:none;font-weight:400;}
+.tags-row{display:flex;flex-wrap:wrap;gap:0 8px;margin-bottom:6px;line-height:1.7;}
+.tag-link{color:#0090FF;font-size:10px;cursor:pointer;font-weight:400;}
+.tag-link:hover{text-decoration:underline;}
+.meta-row{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:0;padding-top:3px;
+}
+.meta-l{font-size:9px;color:#999;display:flex;align-items:center;gap:4px;}
+.dislike-btn{
+  border:1px solid #e2e2e2;border-radius:10px;padding:1.5px 7px;
+  font-size:9px;color:#999;background:#fff;cursor:pointer;display:flex;align-items:center;gap:2px;
+  line-height:1.6;
+}
+
+/* ===== 大家补充了 Card - Minimal Style ===== */
+.supplement-card{
+  margin:8px 12px;
+  /* No extra styling - blends with comments section */
+}
+
+.supplement-entry{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 10px;
+  background:#fff5f5;
+  border-radius:10px;
+  cursor:pointer;
+  transition:.15s;
+}
+.supplement-entry:hover{background:#ffeaea;}
+.supplement-entry:active{transform:scale(.98);}
+
+.entry-icon{
+  width:26px;height:26px;
+  background:#ff2442;
+  border-radius:50%;
+  display:flex;
+  align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.entry-icon svg{width:14px;height:14px;color:#fff;}
+
+.entry-text{flex:1;min-width:0;}
+.entry-title{
+  font-size:11px;font-weight:600;color:#333;
+  display:flex;align-items:center;gap:5px;
+}
+.entry-title span{
+  font-size:9px;font-weight:500;
+  background:#ff2442;color:#fff;
+  padding:1px 5px;border-radius:4px;
+}
+.entry-desc{font-size:10px;color:#888;margin-top:1px;}
+
+.entry-arrow{
+  color:#ccc;
+}
+.entry-arrow svg{width:14px;height:14px;}
+
+/* Loading State */
+.supplement-loading{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 10px;
+  background:#fff5f5;
+  border-radius:10px;
+}
+.loading-bars{
+  display:flex;gap:2px;align-items:flex-end;height:14px;
+}
+.loading-bars span{
+  width:3px;height:100%;
+  background:#ff2442;
+  border-radius:1.5px;
+  animation:loading 1s ease-in-out infinite;
+}
+.loading-bars span:nth-child(2){animation-delay:.15s;}
+.loading-bars span:nth-child(3){animation-delay:.3s;}
+@keyframes loading{
+  0%,100%{height:30%;opacity:.4;}
+  50%{height:100%;opacity:1;}
+}
+.loading-text{
+  font-size:10px;color:#999;
+}
+
+/* Expanded State - Point Items */
+.supplement-points{
+  background:#fff5f5;
+  border-radius:10px;
+  padding:8px 0 2px;
+  margin-top:0;
+}
+
+.points-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 10px 6px;
+}
+.points-title{
+  font-size:11px;font-weight:600;color:#333;
+}
+.points-title strong{color:#ff2442;}
+.points-close{
+  font-size:10px;color:#999;cursor:pointer;
+}
+
+.point-item{
+  padding:8px 10px;
+  border-top:1px solid #ffe8e8;
+}
+.point-item:first-child{border-top:none;}
+
+.point-header{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  margin-bottom:4px;
+}
+.point-icon{
+  font-size:12px;
+}
+.point-title{
+  font-size:11px;font-weight:600;color:#333;
+}
+.point-source{
+  font-size:9px;color:#999;
+  margin-left:auto;
+}
+
+.point-content{
+  font-size:10px;color:#666;
+  line-height:1.5;
+  padding-left:18px;
+}
+
+.point-actions{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-top:6px;
+  padding-left:18px;
+}
+.point-link{
+  font-size:9px;color:#0090FF;
+  cursor:pointer;
+}
+.point-link:hover{text-decoration:underline;}
+.point-feedback{
+  display:flex;gap:6px;
+}
+.feedback-btn{
+  font-size:9px;color:#999;
+  cursor:pointer;
+  padding:2px 6px;
+  border-radius:8px;
+  background:#fff;
+  border:none;
+  transition:.15s;
+}
+.feedback-btn:hover{color:#666;}
+.feedback-btn.active{color:#ff2442;background:#fff0f0;}
+
+/* Section Head */
+.section-head{
+  padding:10px 12px 6px;
+  color:#333;font-size:11px;font-weight:500;
+}
+
+/* Comment Input Row */
+.cmt-input-row{
+  display:flex;align-items:center;gap:8px;
+  padding:3px 12px 9px;
+}
+.cmt-avatar-sm{
+  width:23px;height:23px;border-radius:50%;flex-shrink:0;
+  overflow:hidden;
+}
+.cmt-input-box{
+  flex:1;height:26px;background:#f5f5f5;border-radius:13px;
+  display:flex;align-items:center;padding:0 11px;
+  color:#bbb;font-size:10px;
+}
+.cmt-input-icons{display:flex;gap:9px;color:#ccc;flex-shrink:0;}
+.cmt-input-icons svg{width:14px;height:14px;cursor:pointer;}
+
+/* Comments List */
+.comments{padding:0 12px;}
+.cmt{margin-bottom:12px;}
+.cmt-top{display:flex;gap:7px;}
+.cmt-avt{
+  width:26px;height:26px;border-radius:50%;flex-shrink:0;
+  overflow:hidden;background:#eee;
+}
+.cmt-avt img{width:100%;height:100%;object-fit:cover;}
+.cmt-body{flex:1;min-width:0;}
+.cmt-name{font-size:10px;font-weight:600;color:#333;display:flex;align-items:center;gap:3px;flex-wrap:wrap;}
+.author-tag{
+  font-size:8px;color:#ff2442;background:#fef2f2;
+  padding:1px 4px;border-radius:2px;font-weight:500;border:.5px solid #fecaca;line-height:1.7;
+  transform:scale(.95);transform-origin:left center;
+}
+.cmt-txt{font-size:11px;color:#333;line-height:1.4;margin-top:2px;word-break:break-all;}
+.cmt-txt .at-mention{color:#0090FF;}
+.cmt-meta{
+  display:flex;align-items:center;margin-top:3px;color:#ccc;font-size:9px;
+}
+.cmt-meta .meta-info{display:flex;align-items:center;gap:3px;}
+.cmt-actions{margin-left:auto;display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.cmt-action{display:flex;align-items:center;gap:2px;cursor:pointer;color:#bbb;user-select:none;}
+.cmt-action svg{width:12px;height:12px;}
+.cmt-action.liked{color:#333;}
+.cmt-action .cmt-num{font-size:9px;font-weight:500;color:#333;}
+
+.replies-wrap{margin-top:6px;padding-left:2px;border-left:1.5px solid #eeeeee;}
+.reply{margin-bottom:6px;}
+.rp-top{display:flex;align-items:center;gap:5px;}
+.rp-avt{
+  width:17px;height:17px;border-radius:50%;flex-shrink:0;
+  overflow:hidden;background:#f0f0f0;
+}
+.rp-avt.is-author{
+  width:17px;height:17px;border-radius:50%;border:1px solid #ff2442;
+  background:#fff;display:flex;align-items:center;justify-content:center;
+  font-size:7px;color:#ff2442;font-weight:700;
+}
+.rp-avt img{width:100%;height:100%;object-fit:cover;}
+.rp-name{font-size:9px;font-weight:500;color:#555;}
+.rp-txt{font-size:10px;color:#666;line-height:1.4;margin-top:1px;padding-left:22px;word-break:break-all;}
+.rp-meta{
+  display:flex;align-items:center;gap:3px;padding-left:22px;
+  margin-top:2px;color:#bbb;font-size:9px;
+}
+.rp-actions{margin-left:auto;display:flex;align-items:center;gap:9px;flex-shrink:0;}
+.expand-replies{
+  color:#999;font-size:9px;cursor:pointer;padding:2px 0 0 22px;
+  display:flex;align-items:center;gap:5px;user-select:none;
+}
+.expand-replies::before{
+  content:'';width:12px;height:.5px;background:#ddd;
+}
+
+/* Tab Switcher (for demo) */
+.tab-switcher{
+  position:fixed;top:10px;left:50%;transform:translateX(-50%);
+  display:flex;gap:6px;background:rgba(0,0,0,.7);
+  padding:6px 10px;border-radius:20px;
+  z-index:100;
+}
+.tab-btn{
+  padding:6px 12px;border:none;background:transparent;color:#888;
+  font-size:12px;border-radius:14px;cursor:pointer;transition:.2s;
+}
+.tab-btn.active{background:#fff;color:#000;font-weight:600;}
+
+/* Content visibility */
+.content-fold,.content-loading,.content-expand{display:none;}
+body.show-fold .content-fold,
+body.show-loading .content-loading,
+body.show-expand .content-expand{display:block;}
+body.show-fold .tab-btn.fold,
+body.show-loading .tab-btn.loading,
+body.show-expand .tab-btn.expand{background:#fff;color:#000;}
+body:not(.show-fold):not(.show-loading):not(.show-expand){}
+</style>
+</head>
+<body class="show-fold">
+
+<!-- Tab Switcher -->
+<div class="tab-switcher">
+  <button class="tab-btn fold" onclick="switchTab('fold')">折叠</button>
+  <button class="tab-btn" onclick="switchTab('loading')">加载</button>
+  <button class="tab-btn" onclick="switchTab('expand')">展开</button>
+</div>
+
+<div class="iphone">
+  <div class="screen">
+    <div class="dyn-island"></div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <div class="sb-left">
+        <span style="font-size:10px;color:#000;">9:41</span>
+      </div>
+      <div class="sb-right">
+        <span class="batt-pct">85%</span>
+        <svg width="22" height="11" viewBox="0 0 22 11"><rect x="0" y="0" width="19" height="11" rx="2.5" fill="none" stroke="#000" stroke-width="1"/><rect x="1" y="1" width="14" height="9" rx="1.5" fill="#34c759"/><rect x="19" y="4" width="2" height="3" rx="0.5" fill="#000"/></svg>
+      </div>
+    </div>
+
+    <div class="scroll-area">
+
+      <!-- Header -->
+      <div class="header">
+        <div class="hdr-l">
+          <div class="back-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+          </div>
+          <div class="author-row">
+            <div class="avt-main">
+              <img src="https://sns-avatar-qc.xhscdn.com/avatar/1040g2jo317hb0eat46005ovuuebqh7er5ps4mi0?imageView2/2/w/120/format/jpg">
+            </div>
+            <span class="author-name">潜水员戴夫攻略</span>
+          </div>
+        </div>
+        <div class="hdr-r">
+          <button class="follow-btn">关注</button>
+          <div class="share-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Post Content -->
+      <div class="post">
+        <div class="title">潜水员戴夫新手保姆级攻略，看完少走三年弯路😭</div>
+
+        <div class="post-img-wrap">
+          <div class="post-img">
+            <img src="https://p9-xg.ecombdimg.com/obj/ecom-blog-material/1ad9aeab_58b1e7d4_4a7c_87cf_8d6e_5d0e3d91d0ac">
+          </div>
+          <div class="img-counter-badge">1/17</div>
+        </div>
+
+        <div class="img-dots">
+          <div class="dot on"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+
+        <div class="post-body-text">
+          这游戏真的太好玩了！玩了三个月，总结了一些新手需要注意的点...
+        </div>
+
+        <div class="tags-row">
+          <span class="tag-link">#潜水员戴夫</span>
+          <span class="tag-link">#游戏攻略</span>
+          <span class="tag-link">#Switch游戏</span>
+        </div>
+
+        <div class="meta-row">
+          <div class="meta-l">
+            <span>2024年2月18日</span>
+            <span>·</span>
+            <span>1.2万 56</span>
+          </div>
+          <button class="dislike-btn">… 更多</button>
+        </div>
+      </div>
+
+      <!-- ===== 大家补充了 Card ===== -->
+      <div class="supplement-card">
+
+        <!-- FOLDED STATE -->
+        <div class="content-fold">
+          <div class="supplement-entry">
+            <div class="entry-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                <path d="M8 10h8"/><path d="M8 14h4"/>
+              </svg>
+            </div>
+            <div class="entry-text">
+              <div class="entry-title">
+                大家补充了什么
+                <span>NEW</span>
+              </div>
+              <div class="entry-desc">评论有点多，先帮你看看</div>
+            </div>
+            <div class="entry-arrow">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- LOADING STATE -->
+        <div class="content-loading">
+          <div class="supplement-loading">
+            <div class="loading-bars">
+              <span></span><span></span><span></span>
+            </div>
+            <div class="loading-text">小薯正在看评论区…</div>
+          </div>
+        </div>
+
+        <!-- EXPANDED STATE -->
+        <div class="content-expand">
+          <div class="supplement-points">
+            <div class="points-header">
+              <div class="points-title">大家补充了 <strong>3</strong> 点</div>
+              <div class="points-close">收起 ∨</div>
+            </div>
+
+            <!-- Point 1 -->
+            <div class="point-item">
+              <div class="point-header">
+                <span class="point-icon">💡</span>
+                <span class="point-title">有薯提醒</span>
+                <span class="point-source">16条</span>
+              </div>
+              <div class="point-content">有用户说，晚上会有巨型生物出没，新手建议白天去</div>
+              <div class="point-actions">
+                <span class="point-link">看相关评论</span>
+                <div class="point-feedback">
+                  <button class="feedback-btn">👍有用</button>
+                  <button class="feedback-btn">👎不太准</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Point 2 -->
+            <div class="point-item">
+              <div class="point-header">
+                <span class="point-icon">🔄</span>
+                <span class="point-title">也有人不一样</span>
+                <span class="point-source">12条</span>
+              </div>
+              <div class="point-content">有些玩家体验和攻略不太一样，可能是运气问题</div>
+              <div class="point-actions">
+                <span class="point-link">看不同体验</span>
+                <div class="point-feedback">
+                  <button class="feedback-btn">👍有用</button>
+                  <button class="feedback-btn">👎不太准</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Point 3 -->
+            <div class="point-item">
+              <div class="point-header">
+                <span class="point-icon">🕐</span>
+                <span class="point-title">最近有人说</span>
+                <span class="point-source">8条</span>
+              </div>
+              <div class="point-content">近30天有评论提到，怪物掉率可能被暗改了</div>
+              <div class="point-actions">
+                <span class="point-link">看最新评论</span>
+                <div class="point-feedback">
+                  <button class="feedback-btn">👍有用</button>
+                  <button class="feedback-btn">👎不太准</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /supplement-card -->
+
+      <!-- Section Head -->
+      <div class="section-head">≡ 共 996 条评论</div>
+
+      <!-- Comment Input -->
+      <div class="cmt-input-row">
+        <div class="cmt-avatar-sm">
+          <img src="https://i.pravatar.cc/70?img=33" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+        </div>
+        <div class="cmt-input-box">让大家听到你的声音</div>
+        <div class="cmt-input-icons">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        </div>
+      </div>
+
+      <!-- Comments List -->
+      <div class="comments">
+        <div class="cmt">
+          <div class="cmt-top">
+            <div class="cmt-avt">
+              <img src="https://i.pravatar.cc/70?img=1">
+            </div>
+            <div class="cmt-body">
+              <div class="cmt-name">常青树不长情.
+                <span class="author-tag">作者</span>
+              </div>
+              <div class="cmt-txt">我把杏子解雇了 咋整</div>
+              <div class="cmt-meta">
+                <div class="meta-info"><span>02-18</span><span>内蒙古</span></div>
+                <div class="cmt-actions">
+                  <span class="cmt-action"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+                  <span class="cmt-action liked"><svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="replies-wrap">
+            <div class="reply">
+              <div class="rp-top">
+                <div class="rp-avt is-author">作</div>
+                <span class="rp-name">潜水员戴夫攻略</span>
+              </div>
+              <div class="rp-txt">可以再招一个der</div>
+              <div class="rp-meta">
+                <span>02-18</span><span>·</span><span>5</span><span>回复</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="cmt">
+          <div class="cmt-top">
+            <div class="cmt-avt">
+              <img src="https://i.pravatar.cc/70?img=5">
+            </div>
+            <div class="cmt-body">
+              <div class="cmt-name">想养一只柯基</div>
+              <div class="cmt-txt">晚上那个大章鱼真的很难打！打了三晚上才过😭</div>
+              <div class="cmt-meta">
+                <div class="meta-info"><span>02-17</span><span>北京</span></div>
+                <div class="cmt-actions">
+                  <span class="cmt-action"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+                  <span class="cmt-action"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="cmt">
+          <div class="cmt-top">
+            <div class="cmt-avt">
+              <img src="https://i.pravatar.cc/70?img=8">
+            </div>
+            <div class="cmt-body">
+              <div class="cmt-name">游戏宅小明</div>
+              <div class="cmt-txt">掉率好像被暗改了，我刷了一晚上什么都没出</div>
+              <div class="cmt-meta">
+                <div class="meta-info"><span>02-20</span><span>上海</span></div>
+                <div class="cmt-actions">
+                  <span class="cmt-action"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+                  <span class="cmt-action"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="cmt">
+          <div class="cmt-top">
+            <div class="cmt-avt">
+              <img src="https://i.pravatar.cc/70?img=12">
+            </div>
+            <div class="cmt-body">
+              <div class="cmt-name">switch忠实玩家</div>
+              <div class="cmt-txt">感谢分享！正好需要这个攻略</div>
+              <div class="cmt-meta">
+                <div class="meta-info"><span>02-19</span><span>广州</span></div>
+                <div class="cmt-actions">
+                  <span class="cmt-action"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+                  <span class="cmt-action"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="cmt">
+          <div class="cmt-top">
+            <div class="cmt-avt">
+              <img src="https://i.pravatar.cc/70?img=15">
+            </div>
+            <div class="cmt-body">
+              <div class="cmt-name">深海探险家</div>
+              <div class="cmt-txt">新手期建议多练练钓鱼，后面很有用</div>
+              <div class="cmt-meta">
+                <div class="meta-info"><span>02-18</span><span>成都</span></div>
+                <div class="cmt-actions">
+                  <span class="cmt-action"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+                  <span class="cmt-action"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="height:30px;"></div>
+    </div><!-- /scroll-area -->
+  </div><!-- /screen -->
+</div><!-- /iphone -->
+
+<script>
+function switchTab(tab) {
+  document.body.className = 'show-' + tab;
+}
+</script>
+
+</body>
+</html>
