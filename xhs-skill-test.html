@@ -264,6 +264,105 @@ body{
 }
 .mode-tag.demo{background:#e8f5e9;color:#2e7d32;}
 .mode-tag.real{background:#e3f2fd;color:#1565c0;}
+
+/* ===== Cookie Login ===== */
+.cookie-login{
+  background:#fff;
+  border-radius:12px;
+  padding:16px;
+  margin-bottom:16px;
+}
+.cookie-login-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:12px;
+}
+.cookie-login-title{
+  font-size:14px;
+  font-weight:600;
+  color:#333;
+}
+.login-status{
+  font-size:12px;
+  padding:4px 12px;
+  border-radius:12px;
+}
+.login-status.logged{background:#e8f5e9;color:#2e7d32;}
+.login-status.guest{background:#fff3e0;color:#e65100;}
+
+.cookie-input{
+  width:100%;
+  padding:12px;
+  font-size:13px;
+  border:1.5px solid #e5e5e5;
+  border-radius:8px;
+  outline:none;
+  font-family:Monaco,Menlo,monospace;
+  resize:none;
+  height:80px;
+  transition:border-color .2s;
+}
+.cookie-input:focus{border-color:#ff2442;}
+.cookie-input::placeholder{font-family:-apple-system,sans-serif;color:#ccc;}
+
+.login-actions{
+  display:flex;
+  gap:10px;
+  margin-top:12px;
+}
+.login-btn{
+  flex:1;
+  padding:10px;
+  font-size:13px;
+  font-weight:500;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  transition:opacity .2s;
+}
+.login-btn:hover{opacity:.9;}
+.login-btn.primary{background:#ff2442;color:#fff;}
+.login-btn.secondary{background:#f5f5f5;color:#666;}
+
+.login-guide{
+  margin-top:12px;
+  padding:12px;
+  background:#f8f9fa;
+  border-radius:8px;
+  font-size:12px;
+  color:#666;
+  line-height:1.6;
+}
+.login-guide strong{color:#333;}
+.login-guide ol{margin:8px 0 0 20px;padding:0;}
+
+/* ===== How to get cookie guide ===== */
+.how-to-box{
+  background:#fffbeb;
+  border:1px solid #fcd34d;
+  border-radius:12px;
+  padding:16px;
+  margin-bottom:16px;
+}
+.how-to-box h4{
+  font-size:13px;
+  color:#92400e;
+  margin-bottom:10px;
+}
+.how-to-box ol{
+  margin:0;
+  padding-left:20px;
+  font-size:12px;
+  color:#a16207;
+  line-height:1.8;
+}
+.how-to-box code{
+  background:#fef3c7;
+  padding:1px 5px;
+  border-radius:3px;
+  font-family:Monaco,Menlo,monospace;
+}
 </style>
 </head>
 <body>
@@ -289,20 +388,47 @@ body{
 <div class="tab-content" id="tab-api">
   <div class="api-test-container">
     
-    <!-- Input Card -->
-    <div class="api-test-card">
-      <!-- Mode Switch -->
-      <div class="mode-switch">
-        <button class="mode-btn active" data-mode="demo" onclick="switchMode('demo')">
-          演示模式
-          <span class="mode-tag demo">云端可用</span>
-        </button>
-        <button class="mode-btn" data-mode="real" onclick="switchMode('real')">
-          真实模式
-          <span class="mode-tag real">需本地服务</span>
-        </button>
+    <!-- Cookie Login Card -->
+    <div class="cookie-login">
+      <div class="cookie-login-header">
+        <span class="cookie-login-title">👤 账号认证</span>
+        <span class="login-status guest" id="loginStatus">未登录</span>
       </div>
       
+      <div class="how-to-box" id="howToBox">
+        <h4>📋 如何获取 Cookie</h4>
+        <ol>
+          <li>在浏览器打开 <strong>xiaohongshu.com</strong> 并登录</li>
+          <li>按 <strong>F12</strong> 打开开发者工具</li>
+          <li>点击 <strong>Application</strong> → <strong>Cookies</strong> → <strong>xiaohongshu.com</strong></li>
+          <li>找到 <strong>web_session</strong> 或 <strong>a1</strong> 项，复制 Value 值</li>
+          <li>粘贴到下方输入框</li>
+        </ol>
+      </div>
+      
+      <textarea class="cookie-input" id="cookieInput" 
+                placeholder="粘贴你的小红书 Cookie (web_session 或 a1)..."></textarea>
+      
+      <div class="login-actions">
+        <button class="login-btn secondary" onclick="clearCookie()">清除</button>
+        <button class="login-btn primary" onclick="loginWithCookie()">确认登录</button>
+      </div>
+    </div>
+    
+    <!-- Mode Switch (shown after login) -->
+    <div class="mode-switch" id="modeSwitch" style="display:none;">
+      <button class="mode-btn active" data-mode="real" onclick="switchMode('real')">
+        真实模式
+        <span class="mode-tag real">已登录</span>
+      </button>
+      <button class="mode-btn" data-mode="demo" onclick="switchMode('demo')">
+        演示模式
+        <span class="mode-tag demo">云端可用</span>
+      </button>
+    </div>
+    
+    <!-- Input Card -->
+    <div class="api-test-card" id="inputCard" style="display:none;">
       <div class="input-group">
         <label class="input-label">小红书链接</label>
         <input type="text" class="url-input" id="xhsUrl" 
@@ -352,6 +478,46 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
+// ===== Cookie Login =====
+let userCookie = localStorage.getItem('xhs_cookie') || '';
+
+function checkLoginStatus() {
+  if (userCookie) {
+    document.getElementById('loginStatus').textContent = '已登录';
+    document.getElementById('loginStatus').className = 'login-status logged';
+    document.getElementById('howToBox').style.display = 'none';
+    document.getElementById('modeSwitch').style.display = 'flex';
+    document.getElementById('inputCard').style.display = 'block';
+    document.getElementById('cookieInput').value = userCookie;
+  }
+}
+
+function loginWithCookie() {
+  const cookie = document.getElementById('cookieInput').value.trim();
+  if (!cookie) {
+    alert('请先粘贴 Cookie');
+    return;
+  }
+  
+  userCookie = cookie;
+  localStorage.setItem('xhs_cookie', cookie);
+  checkLoginStatus();
+  
+  // Auto-switch to real mode
+  switchMode('real');
+}
+
+function clearCookie() {
+  userCookie = '';
+  localStorage.removeItem('xhs_cookie');
+  document.getElementById('cookieInput').value = '';
+  document.getElementById('loginStatus').textContent = '未登录';
+  document.getElementById('loginStatus').className = 'login-status guest';
+  document.getElementById('howToBox').style.display = 'block';
+  document.getElementById('modeSwitch').style.display = 'none';
+  document.getElementById('inputCard').style.display = 'none';
+}
+
 // ===== Mode Management =====
 let currentMode = 'demo';
 
@@ -367,21 +533,20 @@ function switchMode(mode) {
       <h4>ℹ️ 当前为演示模式</h4>
       <p>
         演示模式返回模拟数据，用于体验交互流程。<br>
-        无需本地环境，任何人打开网页即可测试。
+        无需登录，任何人打开网页即可测试。
       </p>`;
   } else {
     guide.innerHTML = `
-      <h4>⚠️ 需要本地后端服务</h4>
+      <h4>🔐 当前为真实模式</h4>
       <p>
-        真实模式调用 xhs_cli API，需要本地 Cookie 认证。<br>
-        在终端执行：
-      </p>
-      <p style="margin-top:8px;">
-        <code>cd /Users/zhangyixiao/WorkBuddy/2026-05-30-task-3</code><br>
-        <code>python scripts/xhs_skill_server.py</code>
+        使用你的小红书账号获取真实数据。<br>
+        Cookie 已加密存储在本地浏览器中。
       </p>`;
   }
 }
+
+// Init login status on page load
+document.addEventListener('DOMContentLoaded', checkLoginStatus);
 
 // ===== Demo Data =====
 const DEMO_RESULT = `# 📱 潜水员戴夫 Day1 全流程攻略
@@ -465,13 +630,16 @@ async function runSkill() {
       content.textContent = DEMO_RESULT;
       
     } else {
-      // Real mode: call local backend API
+      // Real mode: call cloud backend API
       try {
-        const response = await fetch('http://localhost:8765/api/xhs/skill', {
+        const response = await fetch('https://YOUR-API-ENDPOINT/api/xhs/skill', {
           method: 'POST',
-          headers: {'Content-Type': 'application/json'},
+          headers: {
+            'Content-Type': 'application/json',
+            'X-User-Cookie': userCookie  // Pass user's cookie to backend
+          },
           body: JSON.stringify({url}),
-          signal: AbortSignal.timeout(10000)
+          signal: AbortSignal.timeout(30000)
         });
         
         if (!response.ok) {
@@ -490,15 +658,19 @@ async function runSkill() {
         }
         
       } catch (err) {
-        // Local service not available, suggest demo mode
+        // Backend not available, show setup guide
         status.className = 'result-status error';
-        status.textContent = '连接失败';
+        status.textContent = '待配置';
         content.className = 'result-content';
         content.innerHTML = `<div class="error-detail">
-          <strong>无法连接本地服务</strong><br>
-          ${err.message}<br><br>
-          <strong>建议：</strong>切换到「演示模式」即可体验功能，<br>
-          无需启动本地服务。
+          <strong>云端后端待部署</strong><br><br>
+          真实模式需要部署云端后端服务来调用小红书API。<br><br>
+          <strong>快速部署方案：</strong><br>
+          1. 将 Cookie 上传到 <strong>Netlify Functions</strong><br>
+          2. 或部署到 <strong>Vercel Edge Functions</strong><br>
+          3. 或使用 <strong>Cloudflare Workers</strong><br><br>
+          将 API 地址替换为你的 endpoint 后即可使用。<br><br>
+          <strong>当前可先用演示模式体验功能。</strong>
         </div>`;
       }
     }
